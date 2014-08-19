@@ -1,0 +1,209 @@
+class Arbre {
+  int nbreperes;
+  Repere[] reperes;
+
+  Arbre(int nb,Repere[] rps) {   
+    nbreperes=nb;
+    reperes=new Repere[nbreperes];
+    for(int i=0;i<nbreperes;i++){reperes[i]=rps[i];}
+   
+    for (int j=0; j<nbreperes; j++) {
+      calcEnfants(j);
+    }
+   
+ 
+    actualiserOrientations();
+    actualiseArbre();
+  }
+
+
+  void actualiseArbre() {
+    reperes[0].position=new PVector(0, 0, 0);
+    for (int i=1; i<nbreperes; i++) { 
+      reperes[i].position=localToAbsolu(i, new PVector(0, 0, 0));
+    
+    }
+  }
+
+  void calcEnfants(int e) {
+    ArrayList<TheInt> liste=new ArrayList<TheInt>();
+    for (int f=1; f<nbreperes; f++) {
+      if (reperes[f].pere==e)liste.add(new TheInt(f));
+    }
+    reperes[e].enfants=new int[liste.size()];
+    for (int u=0; u<liste.size (); u++) {
+      reperes[e].enfants[u]=(liste.get(u)).get();
+    }
+  }
+
+void translationPosition(int choisi,PVector delta){
+    PVector deltaPos=arbre.convertirVecWL(choisi, delta);
+    reperes[choisi].ptranslation=reperes[choisi].translation.get();
+    reperes[choisi].translation=comb(1.0, reperes[choisi].ptranslation, 0.2*d0, deltaPos);
+    reperes[choisi].contrainteTranslation();
+    reperes[choisi].position=localToAbsolu(choisi, new PVector(0, 0, 0));}
+
+
+
+
+
+
+  void drawHierarchie(int i) {
+
+    if (i<nbreperes) {
+      if (i>0) { 
+  /* triedre(55);
+
+        textFont(font, 86);
+        fill( 0);
+        text(i, 50, 50, 50);*/
+        noStroke();
+        fill(255, 255, 0);
+        sphere(12);
+      }
+
+
+      int n=reperes[i].enfants.length; 
+
+      for (int u=0; u<n; u++) {
+        int v=reperes[i].enfants[u];
+        stroke(255, 255, 0);
+        if ((v!=1 )&&(v!=15))               
+          fromTo(new PVector(0, 0, 0), reperes[v].translation, #ffff00);
+
+        pushMatrix();
+        reperes[v].transformation();
+        drawHierarchie(v);
+        popMatrix();
+      }
+    }
+  }
+
+
+
+
+  //changement  de repere pour un point: v vecteur des coords dans repere local est converti en vecteur des coords dans le repere de reference
+
+
+  PVector localToReference(int r, PVector v) {
+    return PVector.add(reperes[r].rotation.tourner(v), reperes[r].translation);
+  }
+
+
+  //changement  de repere pour un point: v en coordonnees locales est converti dans le repere absolu
+
+
+  PVector localToAbsolu(int m, PVector v) {
+    int j=m;
+    PVector global=v;
+    while (j>0) {
+      global=localToReference(j, global);
+      j=reperes[j].pere;
+    }
+    return global;
+  }
+
+
+  // v dans le repere de reference donne v dans le repere local
+  //
+  PVector referenceToLocal(int r, PVector v) {
+
+    return ((reperes[r].rotation).conjugue()).tourner(PVector.sub(v, reperes[r].translation));
+  }
+
+  //le point P est donné pas ses coords dans R0, il faut trouver ses coords dans Rr
+
+
+  PVector absoluToLocal(int r, PVector v) {
+    int ref;
+    PVector ret=new PVector();
+    if (r==0) {
+      ret= v;
+    } else
+    {  
+      ref=reperes[r].pere;
+      ret= referenceToLocal(r, absoluToLocal(ref, v));
+    }
+
+    return ret.get();
+  }
+
+
+
+  PVector convertirVecRL(int n, PVector v) {
+    return reperes[n].rotation.conjugue().tourner(v);
+  }
+
+
+
+
+  PVector convertirVecWL(int r, PVector v) {
+    PVector ret;
+    if (r==0) {
+      ret=v;
+    } else {
+      ret=convertirVecRL(r, convertirVecWL(reperes[r].pere, v));
+    }
+    return ret;
+  }
+
+
+
+  void actualiserOrientations() {
+    //calculer les quaternions des orientations
+    for (int u=0; u<nbreperes; u++) {
+      calculerOrientation(u);
+    }
+  }
+
+
+  void calculerOrientation(int m) {
+    Quat  orient=reperes[m].rotation.get();
+    int p=m;
+    //orientation globale
+    while (p>0) {
+      p=reperes[p].pere;
+      orient=Quat.mul(reperes[p].rotation.get(), orient);
+    }
+    reperes[m].orientation=orient;
+  }
+
+
+
+
+  void triedre(float lo) {
+    noStroke();
+    pushMatrix();
+    translate(lo/2.0, 0, 0);
+    fill(255, 0, 0);
+    box(lo, 12, 12);
+    popMatrix();
+    pushMatrix();
+    translate(0, lo/2, 0);
+    fill(0, 255, 0);
+    box(12, lo, 12);
+    popMatrix();
+    pushMatrix();
+    translate(0, 0, lo/2.0);
+    fill(0, 0, 255);
+    box(12, 12, lo);
+    popMatrix();
+  }
+  void fromTo(PVector u, PVector v, color col) {
+    PVector m=PVector.add(PVector.mult(u, 0.5), PVector.mult(v, 0.5));
+    PVector w=PVector.sub(v, u);
+    float lon=w.mag();
+    PVector n=new PVector(0, -w.z, w.y);
+    n.normalize();
+    w.normalize();
+    pushMatrix();
+    translate(m.x, m.y, m.z);
+    rotate(acos(w.x), n.x, n.y, n.z);
+    fill(col);
+    box(lon, 5, 5);
+    popMatrix();
+  }
+
+
+ 
+}
