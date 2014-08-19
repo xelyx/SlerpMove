@@ -1,0 +1,394 @@
+/* @pjs font="ArialMT-18.vlw"; 
+ */
+/** SLERPingPuppet : a toy figure of a man, with movable limbs.
+ *  fait par Jacques Maire
+ *  le Lundi 18 Aout 2014
+ *  http://www.xelyx.fr
+ * 
+ *  The global motion is a series of 4 interpolations enabling the puppet to move according to 4 key positions.
+ *
+ *  Set the key positions respectively identified as 0,1,2,3 by left click and hold, on the yellow spheres.
+ *
+ *  Move the puppet according to your wish, and save the position N°0 by pressing 0.
+ *
+ *  Then move the puppet, save the position N°1 pressing 1, and so on until you save the final position N°3 by pressing 3.
+ *
+ *  You can start / stop the saved motion using the R key.
+ *
+ *  After the motion, you can modify one of the positions.
+ *
+ *  To modify one of the positions, you add the number 4 to the desired position to be changed, e.g. for position 3 to modified : 3 + 4 = 7. As a result, typing 7 will allow you to change the position N°3.
+ *
+ *  To save your modification for position N°3, press 3.
+ */
+PFont font;
+Arbre arbre;
+PVector[] vecMMprime, globalMprime;
+PVector eyeMouse, mouse, eye, eyePos;
+int choix, numero, nbmob;
+float dist, focale, d0, tempo, temps;
+PVector[][] translations;
+Quat[][] rotations;
+boolean danse;
+void setup() {
+  size(800, 800, P3D); 
+  font=loadFont("ArialMT-18.vlw");
+  rectMode(CENTER);
+  nbmob=13;
+  vecMMprime=new PVector[nbmob];
+  globalMprime=new PVector[nbmob]; 
+  Repere[] rp=new Repere[nbmob];
+  float mod=100;
+  rp[0]=new Repere(0, 0, new PVector(), new Quat(0, new PVector(0, 0, 1)));  
+
+  rp[1]=new Repere(1, 0, new PVector(width*0.5, 0.4*height-100, -400), Quat.exemple(3*PI/2, 0, PI));
+  rp[1].cTra=new ContrainteTranslation(2, new PVector(0, 0, 1), new PVector(50, -600, -450), new PVector(1200, 600, 450));
+  rp[1].cRot=new ContrainteRotation(0, new PVector(0, 0, 0), new PVector(-1, 1, 0)); 
+  rp[1].volumes=new Volumes(1, 4);
+  rp[1].volumes.vecteurs=new PVector[] {
+    new PVector(0, 0, -mod*0.2-16), new PVector(mod, mod/3, mod*0.4), 
+    new PVector(0, 0, mod*0.3+32), new PVector(mod, mod/3, mod*0.4)
+    };
+
+    rp[2]=new Repere(2, 1, new PVector(0, 0, -mod/3-32), new Quat(0, new PVector(1, 0, 0))); 
+  rp[2].cTra=new ContrainteTranslation(5, new PVector(0, 0, 0));
+  rp[2].cRot=new ContrainteRotation();
+  rp[2].volumes=new Volumes(2, 2);
+  rp[2].volumes.vecteurs=new PVector[] {
+    new PVector(0, 0, 0)
+    };
+
+    rp[3]=new Repere(3, 1, new PVector(0, 0, mod*0.2+32 ), new Quat(0, new PVector(1, 0, 0))); 
+  rp[3].cTra=new ContrainteTranslation(5);
+  rp[3].cRot=new ContrainteRotation(0, new PVector(1, 0, 0), new PVector(-1, 1, 0));
+  rp[3].volumes=new Volumes(3, 2);
+  rp[3].volumes.vecteurs=new PVector[] {
+    new PVector(0, 0, mod*0.5+16), new PVector(mod, mod/3, mod)
+    };
+
+    rp[4]=new Repere(4, 3, new PVector(-mod/2-16, 0, mod*0.8), new Quat(1.6, new PVector(1, 0, 0))); 
+  rp[4].cTra=new ContrainteTranslation(5);
+  rp[4].cRot=new ContrainteRotation(0, new PVector(1, 0, 0), new PVector(-1, 1, 0));
+  rp[4].volumes=new Volumes(4, 2);
+  rp[4].volumes.vecteurs=new PVector[] {
+    new PVector(0, 0, mod/2+16), new PVector(mod/3, mod/3, mod)
+    };
+
+    rp[5]=new Repere(5, 3, new PVector(mod/2+16, 0, mod*0.8), new Quat(-1.7, new PVector(1, 0, 0))); 
+  rp[5].cTra=new ContrainteTranslation(5);
+  rp[5].cRot=new ContrainteRotation(0, new PVector(1, 0, 0), new PVector(-1, 1, 0));
+  rp[5].volumes=new Volumes(5, 2);
+  rp[5].volumes.vecteurs=new PVector[] {
+    new PVector(0, 0, mod/2+16), new PVector(mod/3, mod/3, mod)
+    };
+
+    rp[6]=new Repere(6, 4, new PVector(0, 0, mod+32), new Quat(0.4, new PVector(1, 0, 0))); 
+  rp[6].cTra=new ContrainteTranslation(5);
+  rp[6].cRot=new ContrainteRotation(1, new PVector(-1, 0, 0), new PVector(-0.2, 2.3, 0));
+  rp[6].volumes=new Volumes(6, 2);
+  rp[6].volumes.vecteurs=new PVector[] {
+    new PVector(0, 0, mod*0.5+16), new PVector(mod*0.33, mod*0.33, mod)
+    };
+
+    rp[7]=new Repere(7, 5, new PVector(0, 0, mod+32), new Quat(5.4, new PVector(1, 0, 0))); 
+  rp[7].cTra=new ContrainteTranslation(5);
+  rp[7].cRot=new ContrainteRotation(1, new PVector(-1, 0, 0), new PVector(-0.2, 2.3, 0));
+  rp[7].volumes=new Volumes(7, 2);
+  rp[7].volumes.vecteurs=new PVector[] {
+    new PVector(0, 0, mod/2+16), new PVector(mod/3, mod/3, mod)
+    };
+
+    rp[8]=new Repere(8, 3, new PVector(0, 0, mod*1.2 +16), new Quat(0.1, new PVector(1, 0, 0))); 
+  rp[8].cTra=new ContrainteTranslation(5);
+  rp[8].cRot=new ContrainteRotation(0, new PVector(0, 0, 1), new PVector(0, 1.2, 0));
+  rp[8].volumes=new Volumes(8, 4);
+  rp[8].volumes.vecteurs=new PVector[] {
+    new PVector(0, 10, mod*0.45), new PVector(mod*0.7, mod*0.7, mod*0.7), new PVector(0, -30, 0), 
+    new PVector(mod*0.10, mod*0.50, mod*0.1)
+    };
+
+    rp[9]=new Repere(9, 2, new PVector(mod/2+16, 0, 0), new Quat(0.4, new PVector(1, 0, 0))); 
+  rp[9].cTra=new ContrainteTranslation(5);
+  rp[9].cRot=new ContrainteRotation(0, new PVector(-1, 0, 0), new PVector(-1, 1, 0));
+  rp[9].volumes=new Volumes(9, 2);
+  rp[9].volumes.vecteurs=new PVector[] {
+    new PVector(0, 0, -mod*0.7-16), new PVector(mod/3, mod/3, mod*1.4)
+    };
+
+    rp[10]=new Repere(10, 9, new PVector(0, 0, -mod*1.3-32), new Quat(0.6, new PVector(1, 0.2, 0))); 
+  rp[10].cTra=new ContrainteTranslation(5);
+  rp[10].cRot=new ContrainteRotation(1, new PVector(1, 0, 0), new PVector(-0.1, 2.0, 0));
+  rp[10].volumes=new Volumes(10, 2);
+  rp[10].volumes.vecteurs=new PVector[] {
+    new PVector(0, 0, -mod*0.65-16), new PVector(mod/3, mod/3, mod*1.3)
+    };
+
+    rp[11]=new Repere(11, 2, new PVector(-mod/2-16, 0, 0), new Quat(0.3, new PVector(1, -0.3, 0))); 
+  rp[11].cTra=new ContrainteTranslation(5);
+  rp[11].cRot=new ContrainteRotation(0, new PVector(0, 0, 0), new PVector(-1, 1, 0));
+  rp[11].volumes=new Volumes(11, 2);
+  rp[11].volumes.vecteurs=new PVector[] {
+    new PVector(0, 0, -mod*0.7-16), new PVector(mod/3, mod/3, mod*1.4)
+    };
+
+    rp[12]=new Repere(12, 11, new PVector(0, 0, -mod*1.3-32), new Quat(0.9, new PVector(1, 0, 0))); 
+  rp[12].cTra=new ContrainteTranslation(5);
+  rp[12].cRot=new ContrainteRotation(1, new PVector(1, 0, 0), new PVector(-0.1, 1.5, 0));
+  rp[12].volumes=new Volumes(10, 2);
+  rp[12].volumes.vecteurs=new PVector[] {
+    new PVector(0, 0, -mod*0.65-16), new PVector(mod/3, mod/3, mod*1.3)
+    };
+    danse=true;
+  arbre=new Arbre(nbmob, rp); 
+  choix=nbmob;
+  focale=height/(2.0*tan(PI/6.0));
+  eye=new PVector(width/2.0, height/2.0, focale );
+  translations=new PVector[4][nbmob];
+  rotations=new Quat[4][nbmob];
+  initialiserPostures();
+}
+
+void draw() {
+  tempo=sq(cos(millis()*PI/6000.0));
+  temps=sq(cos(millis()*PI/36000.0));
+  background(255);
+  lights();
+  textFont(font, 18);
+  camera(width/2.0, height/2.0, (height/2.0) / tan(PI/6.0), width/2.0, height/2.0, 0, 0, 1, 0); 
+  mouse=new PVector(mouseX, mouseY, 0);
+  eyeMouse=new PVector(mouseX-width/2.0, mouseY-height/2.0, -height/(2.0*tan(PI/6.0)));
+
+  if (danse)  interpoler();
+  arbre.actualiserOrientations();
+  arbre.actualiseArbre();
+  arbre.drawHierarchie(0);
+  sol();
+  fill(0);
+  textFont(font, 18);
+  text("r , R key = run dance ", 10, 670);
+  text("s , S key =  editor mode", 10, 700);
+  text("To change the positions : right click and drag the spheres", 10, 730);
+  text("key 0 , 1 , 2 , 3 : save position", 10, 760);
+  text("key 4 , 5 , 6 , 7 : display position", 10, 790);
+}
+
+
+
+
+//---------------------------------------------------
+PVector comb(float a1, PVector v1, float a2, PVector v2) {
+  return PVector.add(PVector.mult(v1, a1), PVector.mult(v2, a2));
+}
+//---------------------------------------------------
+void intersection( int i) {
+  PVector posM=arbre.localToAbsolu(i, new PVector(0, 0, 0)).get();
+  PVector Meye=PVector.sub(eye, posM);
+  float lambda=(Meye.dot(eyeMouse))/(eyeMouse.dot(eyeMouse));
+  vecMMprime[i]= comb(1, Meye, -lambda, eyeMouse);
+  globalMprime[i]=comb(1, eye, -lambda, eyeMouse);
+}
+//--------------------------------------------------
+
+void mouseDragged() {
+
+  //calcul du numero d'un repere proche du rayon de la souris
+  if (choix==nbmob) {
+    actualiserIntersections();
+    numero=nbmob;
+    dist=1000;
+    for (int i=0; i<nbmob; i++) {
+      PVector Meye=PVector.sub(eye, arbre.reperes[i].position);
+      float dis=vecMMprime[i].mag()/Meye.mag()*10.0;
+      if (dis<dist) {
+        numero=i;
+        dist=dis;
+      }
+    }
+    if (numero<nbmob && dist<1)
+    {
+      choix=numero;
+      eyePos=PVector.sub(arbre.reperes[choix].position, eye);
+      d0=eyePos.mag();
+    }
+  }
+
+  if (mouseButton==LEFT && choix<nbmob) 
+  {
+
+
+    PVector eyePred= PVector.sub(arbre.reperes[choix].position, eye);
+    PVector eyeM=eyeMouse.get();
+    eyeM.normalize();
+    eyePred.normalize(); 
+    arbre.translationPosition(choix, PVector.sub(eyeM, eyePred));
+  }
+  if (mouseButton==RIGHT && choix<nbmob)
+  {
+    Quat qx=new Quat((-mouseY+pmouseY)*0.005, new PVector(1, 0, 0));
+    Quat qy=new Quat((mouseX-pmouseX)*0.005, new PVector(0, 1, 0));
+    Quat qz=new Quat((mouseX-pmouseX+mouseY-pmouseY)*0.001, new PVector(0, 0, 1));
+    arbre.reperes[choix].protation=arbre.reperes[choix].rotation.get();
+    Quat qxy=Quat.mul(qz, Quat.mul(qy, qx));
+    arbre.reperes[choix].rotation=Quat.mul(qxy, arbre.reperes[choix].rotation);
+    arbre.reperes[choix].applyContrainteRotation();
+    arbre.actualiserOrientations();
+  }
+}
+
+
+void mouseReleased() {
+  choix=nbmob;
+}
+
+
+void keyPressed()
+{ 
+
+  if (key=='r'|| key=='R') {
+    danse=true;
+  }
+  if (key=='s'|| key=='S') {
+    danse=false;
+  }
+  if (key=='i'|| key=='I') {
+    initialiserPostures();
+    danse=true;
+  }
+
+  if (!danse) {
+    switch(keyCode) { 
+    case 96:
+    case 48:
+    case 97:
+    case 49:
+    case 98:
+    case 50:
+    case 99:
+    case 51: 
+    int code=(keyCode>95)? (keyCode-96) : (keyCode-48);
+      deArbreVersPostures(code);
+      break;
+
+    case 100:
+    case 52:
+    case 101:
+    case 53:
+    case 102:
+    case 54:
+    case 103:
+     case 55:
+       int cod=(keyCode>95)? (keyCode-96) : (keyCode-48);
+      dePosturesVersArbre(cod-4);
+      break;  
+
+    default:
+      break;
+    }
+  }
+}
+
+void actualiserIntersections() {
+  for (int i=0; i<nbmob; i++) {
+    intersection(i);
+  }
+}
+
+void sol() {
+  pushMatrix();
+  translate(width*0.5, 0.6*height+160, -600);
+  rotateX(HALF_PI);
+  fill(0, 255, 0);
+  box(1200, 1200, 20);
+  popMatrix();
+}
+
+
+void ligne(PVector u, PVector v, int c) {
+  stroke(c);
+  line(u.x, u.y, u.z, v.x, v.y, v.z);
+}
+
+boolean encadre(PVector pos, PVector mi, PVector ma) {
+  boolean bx= ((pos.x > mi.x) && ( pos.x < ma.x ));
+  boolean by= ((pos.y > mi.y) && ( pos.y < ma.y ));
+  boolean bz= ((pos.z > mi.z) && ( pos.z < ma.z ));
+  return (bx && by && bz);
+}
+void deArbreVersPostures(int v) {
+
+  for (int i=0; i<nbmob; i++) {
+    rotations[v][i]=arbre.reperes[i].rotation;
+    translations[v][i]=arbre.reperes[i].translation;
+  }
+}
+void dePosturesVersArbre(int u) {
+
+  for (int i=0; i<nbmob; i++) {
+    arbre.reperes[i].rotation=rotations[u][i];
+    arbre.reperes[i].translation=translations[u][i];
+  }
+}
+
+
+void interpoler() {
+  int u=0;
+  int v=1;
+  int kk=floor(min(5.99, temps*6));
+  if (kk<3 ) {
+    u=kk;
+    v=kk+1;
+  }
+  if (kk>=3 ) {
+    u=6-kk;
+    v=u-1;
+  }
+  text("interpolation  from position "+ u+" to position "+v, 400, 680);
+  for (int i=0; i<nbmob; i++) {
+    arbre.reperes[i].protation=arbre.reperes[i].rotation.get();  
+    arbre.reperes[i].rotation=Quat.slerp(rotations[u][i], rotations[v][i], tempo);
+    arbre.reperes[i].ptranslation=arbre.reperes[i].translation.get();  
+    arbre.reperes[i].translation=PVector.lerp(translations[u][i], translations[v][i], tempo);
+  } 
+  arbre.actualiserOrientations();
+  arbre.actualiseArbre();
+}
+
+
+
+
+void initialiserPostures() {
+  for (int j=0; j<nbmob; j++) { 
+    for (int i=0; i<4; i++) {  
+      translations[i][j]=arbre.reperes[j].translation.get();
+    }
+  }
+
+  for (int i=0; i<4; i++) {
+    rotations[i][0]=Quat.exemple(0, 0, 0);
+    rotations[i][1]=Quat.exemple(PI/2, PI+0.6*abs(2-i), 0);
+  }
+  for (int i=0; i<4; i++) {
+    rotations[i][2]=Quat.exemple(0, 0.12*abs(2-i), 0.7*abs(2-i));
+  }
+  for (int i=0; i<4; i++) {
+    rotations[i][3]=Quat.exemple(0, 0.8*abs(2-i), 0);
+  }    
+
+  for (int i=0; i<4; i++) {
+    rotations[i][4]=Quat.exemple(0.2*abs(2-i)+0.5, 1.0-1.2*abs(2-i), 0.4+-0.4*abs(2-i));
+    rotations[i][5]=Quat.exemple(-1.1*abs(2-i)+0.7, 0.2*abs(2-i), 0.1*abs(2-i));
+    rotations[i][9]=Quat.exemple(0, -0.1*abs(2-i), 0);
+    rotations[i][11]=Quat.exemple(0, 0.2*abs(2-i), 0);
+    rotations[i][8]=Quat.exemple(0, 0.3*abs(2-i), -0.2*abs(2-i));
+  }    
+
+  for (int i=0; i<4; i++) {
+    rotations[i][6]=Quat.exemple(0.7*abs(2-i), 0, 0.3*abs(2-i));
+    rotations[i][10]=Quat.exemple(0.2*abs(2-i), 0.1*abs(2-i), 0);
+  }    
+
+  for (int i=0; i<4; i++) {
+    rotations[i][7]=Quat.exemple(0.8*abs(2-i), 0.7*abs(2-i), 0);
+    rotations[i][12]=Quat.exemple(0.2*abs(2-i), 0.1*abs(2-i), 0);
+  }
+}  
