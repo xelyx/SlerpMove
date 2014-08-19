@@ -1,0 +1,24 @@
+class Volumes {
+  int numero;
+  PVector[] vecteurs;//translation ou box
+
+  Volumes(int n,int dim) {
+    numero=n;
+   vecteurs=new PVector[dim];
+  }
+ 
+
+  void dessine() {
+    pushMatrix();
+    for (int i=0; i<vecteurs.length; i++) {
+      PVector vi=vecteurs[i];
+      if (i%2==0) { 
+        translate(vi.x, vi.y, vi.z);
+      } else { 
+        box(vi.x, vi.y, vi.z);
+      }
+    }
+    popMatrix();
+  
+  }
+}
