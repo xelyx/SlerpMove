@@ -1,0 +1,27 @@
+class ContrainteRotation{
+int type;
+PVector direction,butoirs;
+
+
+ContrainteRotation(int typ,PVector dir,PVector but){
+  type=typ;
+  direction=dir;
+  direction.normalize();
+  butoirs=but;
+}
+
+
+ContrainteRotation(){//type  2, mouvement interdit
+  type=2;
+  direction=new PVector();
+   butoirs=new PVector(-1000,1000,0);
+}
+
+
+}
+
+/*
+0---LIBRE
+1---ROTATION DIRIGEE
+2---ROTATION INTERDITE
+*/
