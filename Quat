@@ -1,0 +1,189 @@
+
+static class Quat {
+  float w, x, y, z;
+
+  Quat() {
+    reset();
+  }
+
+  Quat(float w, float x, float y, float z) {
+    this.w = w;
+    this.x = x;
+    this.y = y;
+    this.z = z;
+  }
+  Quat(float aa, PVector v) {
+    float a=aa/2.0;
+    v.normalize();
+    this.w = cos(a);
+    this.x = sin(a)*v.x;
+    this.y = sin(a)*v.y;
+    this.z = sin(a)*v.z;
+  }
+
+  Quat(Quat  q) {
+
+    q.normalize();
+    this.w =q.w;    
+    this.x = q.x;
+    this.y = q.y;
+    this.z = q.z;
+  }
+  void reset() {
+    w = 1.0f;
+    x = 0.0f;
+    y = 0.0f;
+    z = 0.0f;
+  }
+
+  void set(float w, PVector v) {
+    this.w = w;
+    x = v.x;
+    y = v.y;
+    z = v.z;
+  }
+
+  void set(Quat q) {
+    w = q.w;
+    x = q.x;
+    y = q.y;
+    z = q.z;
+  }
+  Quat get() {
+
+    return new Quat(w, x, y, z);
+  }  
+
+
+  public  Quat normalize()
+  {
+    float dist = sqrt(x * x + y * y + z * z + w * w);
+    if (dist > 0.0f) {
+
+      x /= dist;
+      y /= dist;
+      z /= dist;
+      w /= dist;
+    } else {
+      x=0;
+      y=0;
+      z=0;
+      w=1.0;
+    }
+    return this;
+  }
+
+  static Quat mul(Quat q1, Quat q2) {
+    Quat res = new Quat();
+    res.w = q1.w * q2.w - q1.x * q2.x - q1.y * q2.y - q1.z * q2.z;
+    res.x = q1.w * q2.x + q1.x * q2.w + q1.y * q2.z - q1.z * q2.y;
+    res.y = q1.w * q2.y + q1.y * q2.w + q1.z * q2.x - q1.x * q2.z;
+    res.z = q1.w * q2.z + q1.z * q2.w + q1.x * q2.y - q1.y * q2.x;
+    return res;
+  }
+
+  float[] getValue() {
+    float[] res = new float[4]; 
+    float sa = sqrt(x * x + y * y + z * z );
+    if (sa>0) {
+
+      res[0] = (float) Math.acos(w) * 2.0f;
+      res[1] = x / sa;
+      res[2] = y / sa;
+      res[3] = z / sa;
+    } else {
+      res[0] = 0;
+      res[1] = 0;
+      res[2] = 0;
+      res[3] = 0;
+    }
+
+    return res;
+  }
+
+
+
+  public   Quat conjugue() {
+    return new Quat(w, -x, -y, -z);
+  }
+  public  Quat oppose() {
+    return new Quat(-w, -x, -y, -z);
+  }
+  public Quat copie() {
+    return new Quat(w, x, y, z);
+  }
+
+
+  public Quat copieNorme() {
+    Quat res=new Quat(w, x, y, z);
+    res.normalize();
+    return res;
+  } 
+
+  static float dot(Quat a, Quat b) {//permet de calculer le demi-angle de rotation de conj(a)*b
+    return a.w * b.w +a.x * b.x + a.y * b.y + a.z * b.z ;
+  }
+
+
+
+  public PVector tourner(PVector v) {
+    Quat qv=new Quat(0.0f, v.x, v.y, v.z);
+    Quat qc=this.conjugue();
+    Quat q1=Quat.mul(qv, qc);  
+    Quat q= Quat.mul(this, q1);
+    return new PVector(q.x, q.y, q.z);
+  } 
+
+ 
+
+
+
+  static Quat slerp(Quat qa, Quat qb, float t) {
+    float coef1, coef2;
+    qa.normalize();
+    qb.normalize();
+    float cosinus = Quat.dot(qa, qb);
+    if (cosinus<0){ qb=qb.oppose();cosinus=-cosinus;}
+    if ( Math.abs(cosinus)> 0.999)
+    {
+      coef1 = 1.0 - t;
+      coef2 = t ;
+    } else 
+    {
+      float angle =  acos(cosinus);
+      float sinus = sin(angle);
+      coef1 = sin(angle * (1.0 - t)) / sinus;
+      coef2 = sin(angle * t) / sinus;
+    }
+    return Quat.comb(qa, coef1, qb, coef2);
+  }
+
+
+
+
+
+
+  public static Quat comb(Quat q1, float r1, Quat q2, float r2)
+  {
+    Quat res = new Quat();
+    res.w = q1.w *r1 +  q2.w*r2;
+    res.x = q1.x * r1+  q2.x * r2;
+    res.y = q1.y * r1+  q2.y * r2;
+    res.z = q1.z * r1+  q2.z * r2;
+    return res;
+  } 
+
+  public static Quat exemple(float a, float b, float c) {
+    Quat qx=new Quat(a, new PVector(1, 0, 0));
+    Quat qy=new Quat(b, new PVector(0, 1, 0));
+    Quat qz=new Quat(c, new PVector(0, 0, 1));  
+    Quat qxyz=Quat.mul(qz, Quat.mul(qy, qx));
+    qxyz.normalize();
+    return qxyz;
+  } 
+
+
+  
+
+ 
+}
