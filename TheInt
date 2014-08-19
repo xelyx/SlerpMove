@@ -1,0 +1,11 @@
+class TheInt{
+//astuce trouvée sur le forum processing.org pour contourner un defaut de Javascript
+//http://forum.processing.org/one/topic/processing-js-is-there-something-wrong-with-this-code.html
+  int value;
+  
+  TheInt(int v){
+    value= v;
+  }
+  
+ int get(){return value;}
+}
