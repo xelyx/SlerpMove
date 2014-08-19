@@ -1,0 +1,171 @@
+class Repere {
+  int nom, pere;
+  int[] enfants;
+  PVector translation, ptranslation;//coordonnees de l'origine du repere dans le repere pere.
+  PVector direction;//direction de la contrainte translation
+  PVector position;// coordonnes dans le repere absolu
+  Quat rotation, orientation, protation;//rotation: orientation dans le repere pere,  orientation: orientation dans le repere absolu
+  ContrainteTranslation cTra;
+  ContrainteRotation cRot;
+  Volumes volumes;
+
+  Repere(int sonN, int sonP, PVector loc, Quat qrot) {
+    nom=sonN;
+    pere=sonP;
+    translation=loc.get();
+    translation=loc.get();
+    rotation=qrot.get();
+    protation=qrot.get();
+    orientation=new Quat();
+    cTra=new ContrainteTranslation();
+    cRot=new ContrainteRotation();
+    
+  }
+
+ 
+
+
+  void transformation() {
+    rotation.normalize();
+    translate(translation.x, translation.y, translation.z);
+    float[] tab=rotation.getValue();
+    rotate(tab[0], tab[1], tab[2], tab[3]);
+    
+      fill(155, 100, 155);
+      volumes.dessine();
+    
+  }
+
+  void contrainteTranslation() {
+    int r=cTra.type;
+    switch(r) {
+    case 0:
+      libre();
+      break;  //FREE
+    case 1:
+      mouvementLineaireRef();
+      break;
+    case 2:
+      mouvementPlanaire();//PLANE
+      break;
+    case 3:
+      mouvementSpherique();//SPHERE
+      break; 
+    case 4:
+      mouvementCylindrique();
+      break; 
+    case 5:
+      noMouvement();
+      break; 
+    case 6:
+      mouvementLineaireFrame();
+      break; 
+
+    default:
+      break;
+    }
+  
+  }
+
+
+
+  void noMouvement() {
+    translation=ptranslation.get();
+  }
+
+  void libre() {
+  };
+
+  void mouvementLineaireFrame() {
+    PVector deltaT=PVector.sub(translation, ptranslation);
+    PVector dir=rotation.tourner(cTra.direction);
+    translation=PVector.add(ptranslation, PVector.mult(dir, dir.dot(deltaT)));
+  }
+  void mouvementLineaireRef() {
+    PVector deltaT=PVector.sub(translation, ptranslation);
+    PVector dir=cTra.direction.get();
+    translation=PVector.add(ptranslation, PVector.mult(dir, dir.dot(deltaT)));
+    float lo=translation.dot(dir);
+    if ((lo>cTra.bornes.y)||(lo<cTra.bornes.x)) translation=ptranslation;
+  }
+
+  void mouvementPlanaire() {
+    PVector deltaT=PVector.sub(translation, ptranslation);
+    PVector dir=rotation.tourner(cTra.direction);//coordonnees de cTra.direction dans reference
+    dir.normalize();
+    PVector projeteSurDir=PVector.mult(dir, dir.dot(deltaT));
+    PVector  tr=PVector.sub(ptranslation, PVector.sub(deltaT, projeteSurDir));
+    if (encadre(tr, cTra.minima, cTra.maxima)) {      
+      translation=tr;
+    } else {
+      translation=ptranslation.get();
+    }
+   
+  }
+
+
+
+
+
+  void mouvementSpherique() {
+
+    float rayonp=ptranslation.mag();
+    float rayon=translation.mag();
+    translation=PVector.mult(translation, rayonp/rayon);
+  }
+
+  void mouvementCylindrique() {
+    PVector dir=rotation.tourner(cTra.direction); 
+    PVector pray=PVector.sub(ptranslation, PVector.mult(dir, dir.dot(ptranslation)));
+    PVector proj=PVector.mult(dir, dir.dot(translation));
+    PVector ray=PVector.sub(translation, proj);
+    float prayon=pray.mag();
+    float rayon=ray.mag();  
+    translation=PVector.add(proj, PVector.mult(ray, prayon/rayon));
+  }
+
+  void   applyContrainteRotation() {
+    int r= cRot.type;
+    switch(r) {
+    case 0:
+      rotationLibre();
+      break;  
+    case 1:
+      rotationDirigee();
+      break;
+    case 2:
+      noRotation();
+      break;
+    default:
+      break;
+    }
+  }
+
+  void rotationDirigee() {
+
+    Quat deltaQ=Quat.mul(rotation, protation.conjugue());
+    float[] val=deltaQ.getValue();
+    if (val[0]!=0) {
+      PVector axeQ=(new PVector(val[1], val[2], val[3]));
+      PVector proj=PVector.mult(cRot.direction, cRot.direction.dot(axeQ));
+      rotation=Quat.mul(protation, new Quat(val[0], proj));
+      rotation=rotation.normalize();
+      float angle= 2.0*acos(rotation.w) ;
+    
+      if(angle<cRot.butoirs.x) rotation=new Quat(cRot.butoirs.x,cRot.direction);
+     if(angle>cRot.butoirs.y) rotation=new Quat(cRot.butoirs.y,cRot.direction);
+     
+    }
+  }
+
+  void noRotation() {
+    rotation=protation.get();
+  }
+
+  void rotationLibre() {
+   //a faire: la direction de contrainte etant donnee direction, et le quaternion de rotation etant
+   //defini par un axe et un angle
+  }
+
+
+}
