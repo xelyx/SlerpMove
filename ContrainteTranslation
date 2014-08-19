@@ -1,0 +1,43 @@
+class ContrainteTranslation{
+int type;
+PVector direction,bornes,minima,maxima;
+
+ContrainteTranslation(int typ,PVector dir,PVector born){
+  type=typ;
+  direction=dir;
+  bornes=born;
+}
+ContrainteTranslation(int typ,PVector dir){
+  type=typ;
+  direction=dir;
+  bornes=new PVector(-10000,10000,10000);
+}
+ContrainteTranslation(int typ,PVector dir,PVector mi,PVector ma){
+  type=typ;
+  direction=dir;
+  minima=mi;
+  maxima=ma;
+}
+
+ContrainteTranslation(int ty){//ty est 0 ou 5
+  type=ty;
+  direction=new PVector();
+  bornes=new PVector(-10000,10000,10000);
+}
+ContrainteTranslation(){//ty est 0 
+  type=0;
+  direction=new PVector();
+  bornes=new PVector(-10000,10000,10000);
+}
+
+
+}
+
+/*
+0---LIBRE
+1---LINEAIRE
+2---PLANAIRE
+3---SPHERIQUE
+4---CYLINDRIQUE
+5---TRANSLATION INTERDITE
+*/
